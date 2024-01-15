@@ -64,7 +64,7 @@ CLASS SR_PGS FROM SR_CONNECTION
    METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, cConnect, nPrefetch, cTargetDB, nSelMeth, nEmptyMode, nDateMode, lCounter, lAutoCommit)
    METHOD End()
    METHOD LastError()
-   METHOD Commit()
+   METHOD Commit(lNoLog)
    METHOD RollBack()
    METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName)
    METHOD ExecuteRaw(cCommand)
@@ -157,14 +157,14 @@ RETURN NIL
 
 METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName) CLASS SR_PGS
 
-   LOCAL nFields := 0
-   LOCAL nType := 0
-   LOCAL nLen := 0
-   LOCAL nNull := 0
-   LOCAL aFields := {}
-   LOCAL nDec := 0
+   LOCAL nFields //:= 0
+   //LOCAL nType := 0
+   //LOCAL nLen := 0
+   //LOCAL nNull := 0
+   LOCAL aFields //:= {}
+   //LOCAL nDec := 0
    LOCAL nRet
-   LOCAL cVlr := ""
+   //LOCAL cVlr := ""
    LOCAL cTbl
    LOCAL cOwner := "public"
 
@@ -230,12 +230,12 @@ RETURN "(" + alltrim(str(::nRetCode)) + ") " + PGSErrMsg(::hDbc)
 METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, ;
    cConnect, nPrefetch, cTargetDB, nSelMeth, nEmptyMode, nDateMode, lCounter, lAutoCommit) CLASS SR_PGS
 
-   LOCAL hEnv := 0
-   LOCAL hDbc := 0
+   //LOCAL hEnv := 0
+   LOCAL hDbc //:= 0
    LOCAL nret
-   LOCAL cVersion := ""
-   LOCAL cSystemVers := ""
-   LOCAL cBuff := ""
+   //LOCAL cVersion := ""
+   LOCAL cSystemVers //:= ""
+   //LOCAL cBuff := ""
    LOCAL aRet := {}
    LOCAL aVersion
    LOCAL cmatch

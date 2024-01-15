@@ -71,7 +71,7 @@ CLASS SR_ODBC FROM SR_CONNECTION
    METHOD SetOptions(nType, uBuffer)
    METHOD GetOptions(nType)
    METHOD LastError()
-   METHOD Commit()
+   METHOD Commit(lNoLog)
    METHOD RollBack()
    METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName)
    METHOD ExecuteRaw(cCommand)
@@ -80,11 +80,11 @@ CLASS SR_ODBC FROM SR_CONNECTION
    METHOD FreeStatement()
    METHOD FetchRaw(lTranslate, aFields)
    METHOD FieldGet(nField, aFields, lTranslate)
-   METHOD MoreResults(aArray)
+   METHOD MoreResults(aArray, lTranslate)
    METHOD WriteMemo(cFileName, nRecno, cRecnoName, aColumnsAndData)
    METHOD DriverCatTables()
    METHOD Getline(aFields, lTranslate, aArray)
-   METHOD FetchMultiple(lTranslate, aFields, aCache, nCurrentFetch, aInfo, nDirection, nBlockPos, hnRecno, lFetchAll, aFetch, uRecord, nPos)
+   METHOD FetchMultiple(lTranslate, aFields, aCache, nCurrentFetch, aInfo, nDirection, hnRecno, lFetchAll, aFetch, uRecord, nPos)
 
 ENDCLASS
 
@@ -123,7 +123,7 @@ METHOD DriverCatTables() CLASS SR_ODBC
    LOCAL nRet
    LOCAL aArray := Array(ARRAY_BLOCK1)
    LOCAL nAllocated
-   LOCAL nBlocks
+   //LOCAL nBlocks
    LOCAL aFields
    LOCAL n := 0
 
@@ -133,7 +133,7 @@ METHOD DriverCatTables() CLASS SR_ODBC
    IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
 
       nAllocated := ARRAY_BLOCK1
-      nBlocks    := 1
+      //nBlocks    := 1
       n          := 0
       aFields    := ::IniFields(.F.,,,,,,)
 
@@ -241,7 +241,7 @@ RETURN NIL
 METHOD AllocStatement() CLASS SR_ODBC
 
    LOCAL hStmtLocal := NIL
-   LOCAL nRet := 0
+   LOCAL nRet //:= 0
 
    ::FreeStatement()
 
@@ -271,16 +271,16 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    LOCAL nLen := 0
    LOCAL nNull := 0
    LOCAL cName
-   LOCAL _nLen
+   //LOCAL _nLen
    LOCAL _nDec
    LOCAL cType
    LOCAL nLenField
    LOCAL nNameLen
-   LOCAL aFields := {}
+   LOCAL aFields //:= {}
    LOCAL nDec := 0
    LOCAL nSoma
    LOCAL nRet
-   LOCAL cVlr := ""
+   //LOCAL cVlr := ""
    //LOCAL nBfLn
    //LOCAL nOut
 
@@ -321,7 +321,7 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
             "Last command sent to database : " + ::cLastComm)
          RETURN NIL
       ELSE
-         _nLen := nLen
+         //_nLen := nLen
          _nDec := nDec
          IF (nType == SQL_DOUBLE .OR. nType == SQL_FLOAT) .AND. nDec == 0
             nDec := 6
@@ -390,9 +390,9 @@ METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace
    LOCAL hEnv := NIL
    LOCAL hDbc := NIL
    LOCAL nret
-   LOCAL cVersion := ""
+   //LOCAL cVersion := ""
    LOCAL cSystemVers := ""
-   LOCAL cBuff := ""
+   //LOCAL cBuff := ""
    LOCAL aRet := {}
 
    HB_SYMBOL_UNUSED( cDSN)

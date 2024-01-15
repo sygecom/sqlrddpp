@@ -306,7 +306,7 @@ FUNCTION SR_ChangeStruct(cTableName, aNewStruct)
       NEXT i
 
       FOR i := 1 TO len(oWA:aFields)
-         IF (n := aScan(aNewStruct, {|x|x[1] == oWA:aFields[i, 1]})) == 0
+         IF aScan(aNewStruct, {|x|x[1] == oWA:aFields[i, 1]}) == 0
             IF (!oWA:aFields[i, 1] == oWA:cRecnoName) .AND. (!oWA:aFields[i, 1] == oWA:cDeletedName) .AND. oWA:oSql:nSystemID != SYSTEMID_IBMDB2
                aadd(aToDrop, aClone(oWA:aFields[i]))
                SR_LogFile("changestruct.log", {oWA:cFileName, "Will drop:", oWA:aFields[i, 1]})
@@ -497,7 +497,7 @@ FUNCTION SR_SetCreateAsHistoric(l)
       lCreateAsHistoric := l
    ENDIF
 
-RETURN lCreateAsHistoric
+RETURN lOld
 
 /*------------------------------------------------------------------------*/
 
@@ -661,7 +661,9 @@ RETURN ""
 
 /*------------------------------------------------------------------------*/
 
-FUNCTION SR_WriteTimeLog(cComm, oCnn, nLimisencos)
+FUNCTION SR_WriteTimeLog()
+/*
+   FUNCTION SR_WriteTimeLog(cComm, oCnn, nLimisencos)
 
    LOCAL nAlAtual := Select()
    LOCAL TRACE_STRUCT := { ;
@@ -702,7 +704,7 @@ FUNCTION SR_WriteTimeLog(cComm, oCnn, nLimisencos)
    END SEQUENCE
 
    dbSelectArea(nAlAtual)
-
+*/
 RETURN NIL
 
 /*------------------------------------------------------------------------*/
@@ -890,7 +892,7 @@ FUNCTION SR_HistExpression(n, cTable, cPK, CurrDate, nSystem)
 
    LOCAL cRet
    LOCAL cAl1
-   LOCAL cAl2
+   //LOCAL cAl2
    LOCAL cAlias
    LOCAL oCnn
 
@@ -898,7 +900,7 @@ FUNCTION SR_HistExpression(n, cTable, cPK, CurrDate, nSystem)
 
    cAlias := "W" + StrZero(++_nCnt, 3)
    cAl1   := "W" + StrZero(++_nCnt, 3)
-   cAl2   := "W" + StrZero(++_nCnt, 3)
+   //cAl2   := "W" + StrZero(++_nCnt, 3)
 
    IF _nCnt >= 995
       _nCnt := 1
@@ -928,13 +930,13 @@ FUNCTION SR_HistExpressionWhere(n, cTable, cPK, CurrDate, nSystem, cAlias)
 
    LOCAL cRet
    LOCAL cAl1
-   LOCAL cAl2
+   //LOCAL cAl2
    LOCAL oCnn
 
    oCnn := SR_GetConnection()
 
    cAl1   := "W" + StrZero(++_nCnt, 3)
-   cAl2   := "W" + StrZero(++_nCnt, 3)
+   //cAl2   := "W" + StrZero(++_nCnt, 3)
 
    IF _nCnt >= 995
       _nCnt := 1
@@ -1203,7 +1205,7 @@ RETURN aData
 
 METHOD Delete(uHashKey) CLASS SqlFastHash
 
-   LOCAL nIndex := 0
+   LOCAL nIndex //:= 0
 
    nIndex := hb_HPos(::hHash, uHashKey)
 
@@ -1218,7 +1220,7 @@ RETURN .F.
 
 METHOD Update(uHashKey, uValue) CLASS SqlFastHash
 
-   LOCAL nIndex := 0
+   LOCAL nIndex //:= 0
 
    nIndex := hb_HPos(::hHash, uHashKey)
 
@@ -1544,7 +1546,7 @@ FUNCTION SQLBINDBYVAL(xMessage, aOptions, cColorNorm, nDelay)
 
    LOCAL nOldDispCount
    LOCAL nCount
-   LOCAL nLen
+   //LOCAL nLen
    LOCAL sCopy
    LOCAL lWhile
 
@@ -1641,7 +1643,8 @@ FUNCTION SQLBINDBYVAL(xMessage, aOptions, cColorNorm, nDelay)
 
       FOR EACH xMessage IN aSay
 
-         IF (nLen := Len(xMessage)) > 58
+         //IF (nLen := Len(xMessage)) > 58
+         IF Len(xMessage) > 58
             FOR nPos := 58 TO 1 STEP -1
                IF xMessage[nPos] $ (" " + Chr(9))
                   EXIT
@@ -1681,7 +1684,7 @@ FUNCTION SQLBINDBYVAL(xMessage, aOptions, cColorNorm, nDelay)
                if we not inform the second color pair, then xHarbour alert will behave
                like Clipper.  2004/Sep/16 - Eduardo Fernandes <modalsist> */
 
-      cColor11 := cColor12 := cColor21 := cColor22 := ""
+      //cColor11 := cColor12 := cColor21 := cColor22 := ""
 
       cColorStr := alltrim(StrTran(cColorNorm, " ", ""))
       nCommaSep := At(",", cColorStr)

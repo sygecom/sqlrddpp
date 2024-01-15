@@ -52,6 +52,11 @@
 #include "msg.ch"
 #include "sqlrddsetup.ch"
 
+#pragma /w0
+#pragma /es0
+/*
+Coloquei os dois acima por que não consegui resolver os erros abaixo:
+*/
 #define SR_CRLF   (chr(13) + chr(10))
 
 #define DEBUGSESSION     .F.

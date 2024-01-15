@@ -452,10 +452,10 @@ CLASS ClipperExpression
    ACCESS nLength
 
    EXPORTED:
-   METHOD Evaluate()
+   METHOD Evaluate(lIgnoreRelations)
 
    EXPORTED:
-   METHOD new(pContext, pValue)
+   METHOD new(pContext, pValue, pIgnoreRelations)
 
 ENDCLASS
 
@@ -477,13 +477,13 @@ RETURN NIL
 
 METHOD Evaluate(lIgnoreRelations) CLASS ClipperExpression
 
-   LOCAL nSeconds
+   //LOCAL nSeconds
    LOCAL save_slct
    LOCAL Result
    LOCAL oErr
 
    // can be very slow with relations...
-   nseconds := seconds()
+   //nseconds := seconds()
 
    BEGIN SEQUENCE WITH __BreakBlock()
       if pcount() == 1 .AND. lIgnoreRelations

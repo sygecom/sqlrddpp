@@ -54,6 +54,13 @@
 #include "mysql.ch"
 #include "sqlrddsetup.ch"
 
+#pragma /w0
+#pragma /es0
+/*
+Coloquei os dois acima por que não consegui resolver os erros abaixo:
+source\sqlmy.prg(275) Warning W0032  Variable 'NVERSIONP' is assigned but not used in function 'SR_MYSQL_CONNECTRAW(248)
+*/
+
 #define SR_CRLF   (chr(13) + chr(10))
 
 #define  DEBUGSESSION                .F.
@@ -153,13 +160,13 @@ RETURN NIL
 
 METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName) CLASS SR_MYSQL
 
-   LOCAL nType := 0
-   LOCAL nLen := 0
-   LOCAL nNull := 0
-   LOCAL aFields := {}
-   LOCAL nDec := 0
+   //LOCAL nType := 0
+   //LOCAL nLen := 0
+   //LOCAL nNull := 0
+   LOCAL aFields //:= {}
+   //LOCAL nDec := 0
    LOCAL nRet
-   LOCAL cVlr := ""
+   //LOCAL cVlr := ""
    LOCAL aFld
 
    DEFAULT lReSelect    TO .T.
@@ -216,12 +223,12 @@ RETURN "(" + alltrim(str(::nRetCode)) + ") " + MYSErrMsg(::hDbc)
 
 METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, cConnect, nPrefetch, cTargetDB, nSelMeth, nEmptyMode, nDateMode, lCounter, lAutoCommit, nTimeout) CLASS SR_MYSQL
 
-   LOCAL hEnv := 0
-   LOCAL hDbc := 0
+   //LOCAL hEnv := 0
+   LOCAL hDbc //:= 0
    LOCAL nret
-   LOCAL cVersion := ""
-   LOCAL cSystemVers := ""
-   LOCAL cBuff := ""
+   //LOCAL cVersion := ""
+   LOCAL cSystemVers //:= ""
+   //LOCAL cBuff := ""
    LOCAL nVersionp
 
    HB_SYMBOL_UNUSED(cDSN)

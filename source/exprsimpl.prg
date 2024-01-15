@@ -95,13 +95,13 @@ METHOD SimplifyComposition(oExpression) CLASS ExpressionSimplifierBase
    LOCAL oAlgebraSet
    LOCAL newClipperString
    LOCAL newOperands := {oExpression:oOperand1, oExpression:oOperand2}
-   LOCAL oSimpleExpression
+   //LOCAL oSimpleExpression
    LOCAL i
 
    FOR i := 1 TO 2
       newOperands[i] := ::Simplify(newOperands[i])
       IF newOperands[i]:lIsSimple
-         oSimpleExpression := newOperands[i]:oExpression
+         //oSimpleExpression := newOperands[i]:oExpression
          oAlgebraSet := AlgebraSet():new(oExpression:oOperator, oExpression:GetType())
          IF oAlgebraSet:cIdentityElement == upper(newOperands[i]:Value)
             RETURN iif(i == 1, ::Simplify(newOperands[2]), newOperands[1])

@@ -52,6 +52,16 @@
 
 #define SR_CRLF   (chr(13) + chr(10))
 
+#pragma /w0
+#pragma /es0
+/*
+Coloquei os dois acima por que não consegui resolver os erros abaixo:
+source\sqlgen1.prg(1221) Warning W0032  Variable 'UDATA' is assigned but not used in function 'SR_SQLCODEGEN2(359)'
+source\sqlgen1.prg(1221) Warning W0032  Variable 'UDATA' is assigned but not used in function 'SR_SQLCODEGEN2(1008)'
+source\sqlgen1.prg(1221) Warning W0032  Variable 'UDATA' is assigned but not used in function 'SR_SQLCODEGEN2(1046)'
+source\sqlgen1.prg(1221) Warning W0032  Variable 'CTRAILLER' is assigned but not used in function 'SR_SQLCODEGEN2(1198)'
+*/
+
 /*
 * Readble Macros
 */
@@ -111,7 +121,7 @@ STATIC FUNCTION SR_SQLCodeGen2(apCode, aParam, nSystemId, lIdent, nIP, nContext,
    LOCAL lLocking := .F.
    LOCAL nLen := len(apCode)
    LOCAL bError := Errorblock()
-   LOCAL aLJoins := {}             /* A, B, Expression */
+   //LOCAL aLJoins := {}             /* A, B, Expression */
    LOCAL aTables := {}             /* TableName */
    LOCAL aQualifiedTables := {}             /* Owner.TableName */
    LOCAL aAlias := {}
@@ -701,7 +711,7 @@ STATIC FUNCTION SR_SQLCodeGen2(apCode, aParam, nSystemId, lIdent, nIP, nContext,
 
             cSql += NEWLINE + IDENTSPACE + " UNION" + NEWLINE + IDENTSPACE + "  "
 
-            aLJoins := {}             /* A, B, Expression */
+            //aLJoins := {}             /* A, B, Expression */
             aTables := {}             /* TableName */
             aQualifiedTables := {}
             aAlias := {}
@@ -854,7 +864,7 @@ STATIC FUNCTION SR_SQLCodeGen2(apCode, aParam, nSystemId, lIdent, nIP, nContext,
 
             ENDIF
 
-            aLJoins := {}             /* A, B, Expression */
+            //aLJoins := {}             /* A, B, Expression */
             aTables := {}             /* TableName */
             aQualifiedTables := {}
             aAlias := {}
@@ -1204,7 +1214,6 @@ STATIC FUNCTION SR_SQLCodeGen2(apCode, aParam, nSystemId, lIdent, nIP, nContext,
       ELSE
          SR_SQLParseError(, , "", nErrorId, , bError)
       ENDIF
-
    END SEQUENCE
 
    IF lIdent
@@ -1619,7 +1628,7 @@ FUNCTION SR_TableAttr(cTableName, nSystemID)
    /* Translates "c:\data\accounts\chart.dbf" to "DATA_ACCONTS_CHART" */
 
    LOCAL aRet
-   LOCAL cOwner := ""
+   LOCAL cOwner //:= ""
    LOCAL cSlash
 
    IF substr(cTableName, 2, 1) == ":"

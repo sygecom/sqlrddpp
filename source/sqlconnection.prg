@@ -162,10 +162,7 @@ CLASS SR_CONNECTION
    DATA sslkey
    DATA sslrootcert
    DATA sslcrl
-   // CULIK 21/3/2011 Adicionado para indicar se o indice contem cluster
-   DATA lClustered AS LOGICAL INIT .F. READONLY
    //culik 30/12/2011 adicionado para indicar se e  sqlserver versao 2008 ou superior
-   DATA lSqlServer2008 AS LOGICAL INIT .F.
    DATA lOracle12      AS LOGICAL INIT .F. // do we have Oracle >= 12.0
 
    DATA lBind INIT .F.
@@ -190,11 +187,11 @@ CLASS SR_CONNECTION
    METHOD SetOptions(nType, uBuffer)
    METHOD GetOptions(nType)
    METHOD LastError()
-   METHOD Commit()
+   METHOD Commit(lNoLog)
    METHOD RollBack()
    METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName, lRefCursor) VIRTUAL
    METHOD ExecuteRaw() VIRTUAL
-   METHOD Execute(cCommand, lErrMsg, nLogMode, cType)
+   METHOD Execute(cCommand, lErrMsg, nLogMode, cType, lNeverLog)
    METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno, cRecnoName, cDeletedName, lTranslate, nLogMode, cType)
    METHOD AllocStatement()
    METHOD SetStmtOptions(nType, uBuffer)
@@ -211,7 +208,7 @@ CLASS SR_CONNECTION
    METHOD ListCatTables(cOwner)
    METHOD DriverCatTables() VIRTUAL
    METHOD FetchMultiple(lTranslate, aFields, aCache, nCurrentFetch, aInfo, nDirection, hnRecno, lFetchAll, aFetch, uRecord, nPos) VIRTUAL
-   METHOD LogQuery(cSql, cType)
+   METHOD LogQuery(cCommand, cType, nLogMode, nCost)
 
    METHOD SQLType(nType, cName, nLen)
    METHOD SQLLen(nType, nLen, nDec)
@@ -280,7 +277,7 @@ RETURN NIL
 METHOD ListCatTables(cOwner) CLASS SR_CONNECTION
 
    LOCAL aRet := {}
-   LOCAL aRet2 := {}
+   LOCAL aRet2
    LOCAL i
 
    DEFAULT cOwner TO SR_SetGlobalOwner()
@@ -385,7 +382,7 @@ RETURN NIL
 
 METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno, cRecnoName, cDeletedName, lTranslate, nLogMode, cType) CLASS SR_CONNECTION
 
-   LOCAL nRet := 0
+   LOCAL nRet
    LOCAL i
    LOCAL j
    LOCAL n
@@ -394,8 +391,7 @@ METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno
    LOCAL aDb
    LOCAL nFieldRec
    LOCAL aFields
-   LOCAL nBlocks
-   LOCAL nAllocated := 0
+   LOCAL nAllocated
    LOCAL nLenMemo
    LOCAL nLinesMemo
    LOCAL aMemo
@@ -594,7 +590,6 @@ METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno
                   nAllocated := ARRAY_BLOCK1
                ENDIF
 
-               nBlocks := 1
                n       := 0
                aFields := ::IniFields(.F.,,,,, cRecnoName, cDeletedName)
 
@@ -652,7 +647,7 @@ RETURN SQL_SUCCESS
 
 METHOD Execute(cCommand, lErrMsg, nLogMode, cType, lNeverLog) CLASS SR_CONNECTION
 
-   LOCAL nRet := 0
+   LOCAL nRet
 
    DEFAULT lErrMsg   TO .T.
    DEFAULT lNeverLog TO .F.
@@ -998,9 +993,6 @@ METHOD Connect(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, c
 
    LOCAL hEnv := NIL
    LOCAL hDbc := NIL
-   LOCAL cVersion := ""
-   LOCAL cSystemVers := ""
-   LOCAL cBuff := ""
    LOCAL aCon
    LOCAL aItem
    LOCAL aToken
@@ -1061,11 +1053,10 @@ METHOD Connect(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, c
          ENDIF
 
          aToken := hb_atokens(aItem, "=")
-         cBuff := alltrim(Upper(aToken[1]))
          IF len(aToken) = 1
             aadd(aToken, "")
          ENDIF
-         SWITCH cBuff
+         SWITCH alltrim(Upper(aToken[1]))
          CASE "UID"
          CASE "UIID"
          CASE "USR"
@@ -1155,8 +1146,6 @@ METHOD Connect(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, c
             EXIT
          CASE "COMPRESS"
             ::lCompress := Upper(aToken[2]) $ "Y,S,TRUE"
-//         OtherWise
-//            SR_MsgLogFile("Invalid connection string entry : " + cBuff + " = " + SR_Val2Char(aToken[2]))
          ENDSWITCH
       NEXT
    ENDIF
@@ -1260,8 +1249,6 @@ METHOD SQLType(nType, cName, nLen) CLASS SR_CONNECTION
 RETURN cType
 
 METHOD SQLLen(nType, nLen, nDec) CLASS SR_CONNECTION
-
-   LOCAL cType := "U"
 
    DEFAULT nDec TO -1
 

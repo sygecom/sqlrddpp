@@ -617,7 +617,7 @@ RETURN NIL
 STATIC FUNCTION SR_SetEnvSQLRDD(oConnect)
 
    LOCAL aRet := {}
-   LOCAL cRet := ""
+   LOCAL cRet //:= ""
    LOCAL i
    LOCAL oCnn
    LOCAL cStartingVersion
@@ -719,8 +719,8 @@ STATIC FUNCTION SR_SetEnvSQLRDD(oConnect)
       CASE SYSTEMID_POSTGR
          IF SR_UseSequences() .AND. i == 1
             aRet := {}
-            oCnn:exec("SELECT * FROM SQ_NRECNO", .F., .T., @aRet)
-            oCnn:Commit()
+            //oCnn:exec("SELECT * FROM SQ_NRECNO", .F., .T., @aRet)
+            //oCnn:Commit()
          ENDIF
          oCnn:exec("SET CLIENT_ENCODING to 'LATIN1'", .F., .T., @aRet)
          oCnn:exec("SET xmloption to 'DOCUMENT'", .F., .T., @aRet)
@@ -1453,14 +1453,14 @@ RETURN NIL
 
 FUNCTION SR_SetTimeTrace(nConnection, nMilisseconds)
 
-   LOCAL nOld
+   //LOCAL nOld
 
    DEFAULT nActiveConnection TO 0
    DEFAULT nConnection TO nActiveConnection
    DEFAULT aConnections TO {}
    SR_CheckConnection(nConnection)
    DEFAULT nMilisseconds TO aConnections[nConnection]:nTimeTraceMin
-   nOld := aConnections[nConnection]:nTimeTraceMin
+   //nOld := aConnections[nConnection]:nTimeTraceMin
    aConnections[nConnection]:nTimeTraceMin := nMilisseconds
 
 RETURN NIL
@@ -1586,7 +1586,7 @@ FUNCTION SR_DropIndex(cIndexName, cOwner)
    LOCAL oWA
    LOCAL lTag := .F.
    LOCAL cIndex
-   LOCAL ctempIndex := ""
+   LOCAL ctempIndex //:= ""
 
    oCnn := SR_GetConnection()
 
@@ -1689,7 +1689,7 @@ FUNCTION SR_DropTable(cFileName, cOwner)
 
    LOCAL oCnn
    LOCAL lRet
-   LOCAL aRet := {}
+   LOCAL aRet //:= {}
 
    oCnn := SR_GetConnection()
 
@@ -1751,11 +1751,11 @@ FUNCTION SR_ListIndex(cFilename)
 
    aRet := {}
    nRet := oCnn:exec("SELECT IDXNAME_,PHIS_NAME_,IDXKEY_,IDXFOR_,IDXCOL_,TAG_,TAGNUM_ FROM " + SR_GetToolsOwner() + "SR_MGMNTINDEXES WHERE TABLE_ = '" + alltrim(upper(cFilename)) + "'", .F., .T., @aRet)
-
-   FOR i := 1 TO len(aRet)
-      aRet[i, 1] := alltrim(aRet[i, 1])
-   NEXT i
-
+   IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
+      FOR i := 1 TO len(aRet)
+         aRet[i, 1] := alltrim(aRet[i, 1])
+      NEXT i
+   ENDIF
 RETURN aRet
 
 /*------------------------------------------------------------------------*/
@@ -1799,11 +1799,13 @@ FUNCTION SR_RenameTable(cTable, cNewName, cOwner)
 
    aRet := {}
    nRet := oCnn:exec("SELECT * FROM " + SR_GetToolsOwner() + "SR_MGMNTTABLES WHERE TABLE_ = '" + upper(cNewName) + "'", .F., .T., @aRet)
-   IF len(aRet) > 0
-      // Destination EXISTS !!
-      RETURN .F.
+   IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
+      IF len(aRet) > 0
+         // Destination EXISTS !!
+         RETURN .F.
+      ENDIF
    ENDIF
-
+   
    SWITCH oCnn:nSystemID
    CASE SYSTEMID_MSSQL7
    CASE SYSTEMID_AZURE
@@ -1818,6 +1820,9 @@ FUNCTION SR_RenameTable(cTable, cNewName, cOwner)
    CASE SYSTEMID_MARIADB
       IF oCnn:nSystemID == SYSTEMID_POSTGR
          nRet := oCnn:exec("ALTER TABLE " + cOwner + SR_DBQUALIFY(cTable + "_sq", oCnn:nSystemID) + " RENAME TO " + cOwner + SR_DBQUALIFY(cNewName+"_sq", oCnn:nSystemID), .F.)
+         IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
+            lOk := .T.
+         ENDIF   
       ENDIF
 
       nRet := oCnn:exec("ALTER TABLE " + cOwner + SR_DBQUALIFY(cTable, oCnn:nSystemID) + " RENAME TO " + cOwner + SR_DBQUALIFY(cNewName, oCnn:nSystemID), .F.)
@@ -1827,9 +1832,15 @@ FUNCTION SR_RenameTable(cTable, cNewName, cOwner)
 
       IF oCnn:nSystemID == SYSTEMID_POSTGR
          nRet := oCnn:exec("ALTER TABLE " + cOwner + SR_DBQUALIFY(cNewName, oCnn:nSystemID) + " ALTER COLUMN " + SR_RecnoName() + " SET DEFAULT nextval('" + lower(cNewName) + "_sq'::regclass)")
+         IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
+            lOk := .T.
+         ENDIF
       ENDIF
       IF oCnn:nSystemID == SYSTEMID_ORACLE
          nRet := oCnn:exec("RENAME " + cOwner + cTable + "_sq" + " TO " + cOwner + cNewName+"_sq", .F.)
+         IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
+            lOk := .T.
+         ENDIF
       ENDIF
       EXIT
 
@@ -1860,8 +1871,9 @@ FUNCTION SR_ListCreatedTables()
 
    oCnn := SR_GetConnection()
    nRet := oCnn:exec("SELECT TABLE_ FROM " + SR_GetToolsOwner() + "SR_MGMNTTABLES", .F., .T., @aRet)
-
-   aEval(aRet, {|x| aadd(aRet2, alltrim(x[1])) })
+   IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
+      aEval(aRet, {|x| aadd(aRet2, alltrim(x[1])) })
+   ENDIF
 
 RETURN aRet2
 

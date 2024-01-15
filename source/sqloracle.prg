@@ -52,6 +52,15 @@
 #include "msg.ch"
 #include "sqlrddsetup.ch"
 
+#pragma /w0
+#pragma /es0
+/*
+Coloquei os dois acima por que não consegui resolver os erros abaixo:
+source\sqloracle.prg(738) Warning W0033  Variable 'NCOLS' is never assigned in function 'SR_ORACLE_EXECSPRC(512)'
+source\sqloracle.prg(738) Warning W0032  Variable 'AFIELDS' is assigned but not used in function 'SR_ORACLE_EXECSPRC(564)'
+source\sqloracle.prg(766) Warning W0032  Variable 'NERROR' is assigned but not used in function 'EXECUTESP(740)
+*/
+
 #define SR_CRLF   (chr(13) + chr(10))
 
 #define DEBUGSESSION     .F.
@@ -72,21 +81,21 @@ CLASS SR_ORACLE FROM SR_CONNECTION
    METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, cConnect, nPrefetch, cTargetDB, nSelMeth, nEmptyMode, nDateMode, lCounter, lAutoCommit) CONSTRUCTOR
    METHOD End()
    METHOD LastError()
-   METHOD Commit()
+   METHOD Commit(lNoLog)
    METHOD RollBack()
    METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName)
    METHOD ExecuteRaw(cCommand)
    METHOD AllocStatement()
    METHOD FreeStatement()
    METHOD FetchRaw(lTranslate, aFields)
-   METHOD FieldGet(nField, aField, lTranslate)
+   METHOD FieldGet(nField, aFields, lTranslate)
    METHOD MoreResults(aArray, lTranslate)
-   METHOD BINDPARAM(lStart, lIn, cRet, nLen)
+   METHOD BINDPARAM(lStart, lIn, nLen, cRet, nLenRet)
    METHOD ConvertParams(c)
    METHOD WriteMemo(cFileName, nRecno, cRecnoName, aColumnsAndData)
    METHOD Getline(aFields, lTranslate, aArray)
    METHOD ExecSPRC(cComm, lMsg, lFetch, aArray, cFile, cAlias, cVar, nMaxRecords, lNoRecno, cRecnoName, cDeletedName, lTranslate, nLogMode)
-   METHOD ExecSP(cComm, aReturn, nParam)
+   METHOD ExecSP(cComm, aReturn, nParam, aType)
    METHOD GetAffectedRows()
 
 ENDCLASS
@@ -172,7 +181,7 @@ RETURN NIL
 
 METHOD AllocStatement() CLASS SR_ORACLE
 
-   LOCAL hStmtLocal := 0
+   //LOCAL hStmtLocal := 0
    LOCAL nRet := 0
 
    ::FreeStatement()
@@ -197,13 +206,13 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    LOCAL nNull := 0
    LOCAL nDec := 0
    LOCAL cName
-   LOCAL _nLen
-   LOCAL _nDec
+   //LOCAL _nLen
+   //LOCAL _nDec
    LOCAL cType
    LOCAL nLenField
-   LOCAL aFields := {}
+   LOCAL aFields //:= {}
    LOCAL nRet
-   LOCAL cVlr := ""
+   //LOCAL cVlr := ""
 
    DEFAULT lReSelect    TO .T.
    DEFAULT lLoadCache   TO .F.
@@ -238,8 +247,8 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
          ::RunTimeErr("", "SQLDescribeCol Error" + SR_CRLF + ::LastError() + SR_CRLF + "Last command sent to database : " + ::cLastComm)
         RETURN NIL
       ELSE
-         _nLen := nLen
-         _nDec := nDec
+         //_nLen := nLen
+         //_nDec := nDec
          cName := Upper(alltrim(cName))
 
          IF (nLen == 2000 .OR. nLen == 4000) .AND. SR_SetNwgCompat()
@@ -282,12 +291,12 @@ RETURN SQLO_GETERRORDESCR(::hDBC) + " retcode: " + sr_val2Char(::nRetCode) + " -
 
 METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, cConnect, nPrefetch, cTargetDB, nSelMeth, nEmptyMode, nDateMode, lCounter, lAutoCommit) CLASS SR_ORACLE
 
-   LOCAL hEnv := 0
+   //LOCAL hEnv := 0
    LOCAL hDbc := 0
    LOCAL nret
-   LOCAL cVersion := ""
-   LOCAL cSystemVers := ""
-   LOCAL cBuff := ""
+   //LOCAL cVersion := ""
+   LOCAL cSystemVers //:= ""
+   //LOCAL cBuff := ""
    LOCAL aRet := {}
 
    HB_SYMBOL_UNUSED(cDSN)
@@ -459,7 +468,7 @@ METHOD ExecSP(cComm, aReturn, nParam, aType) CLASS SR_ORACLE
 
    LOCAL i
    LOCAL n
-   LOCAL nError := 0
+   LOCAL nError //:= 0
 
    DEFAULT aReturn TO {}
    DEFAULT aType   TO {}
@@ -505,8 +514,8 @@ METHOD ExecSPRC(cComm, lMsg, lFetch, aArray, cFile, cAlias, cVar, nMaxRecords, l
 
    LOCAL i
    LOCAL n
-   LOCAL nAllocated := 0
-   LOCAL nBlocks
+   LOCAL nAllocated //:= 0
+   //LOCAL nBlocks
    LOCAL nError
    LOCAL aFields
    LOCAL nCols
@@ -684,7 +693,7 @@ METHOD ExecSPRC(cComm, lMsg, lFetch, aArray, cFile, cAlias, cVar, nMaxRecords, l
             nAllocated := ARRAY_BLOCK1
          ENDIF
 
-         nBlocks := 1
+         //nBlocks := 1
          n := 0
          aFields := ::IniFields(.F., , , , , cRecnoName, cDeletedName)
 

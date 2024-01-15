@@ -156,15 +156,14 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    LOCAL nLen := 0
    LOCAL nNull := 0
    LOCAL cName
-   LOCAL _nLen
+   //LOCAL _nLen
    LOCAL _nDec
    LOCAL nPos
    LOCAL cType
    LOCAL nLenField
-   LOCAL aFields := {}
+   LOCAL aFields
    LOCAL nDec := 0
    LOCAL nRet
-   LOCAL cVlr := ""
    LOCAL aLocalPrecision := {}
 
    DEFAULT lReSelect TO .T.
@@ -202,7 +201,7 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
          ::RunTimeErr("", "FBDescribeCol Error" + SR_CRLF + ::LastError() + SR_CRLF + "Last command sent to database : " + ::cLastComm)
          RETURN NIL
       ELSE
-         _nLen := nLen
+         //_nLen := nLen
          _nDec := nDec
 
          cName := upper(alltrim(cName))
