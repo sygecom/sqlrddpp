@@ -106,10 +106,10 @@ CLASS ExpressionTranslator
    METHOD GetTranslation(oCondition)
 
    EXPORTED:
-   METHOD Translate(oExpression)
+   METHOD Translate(oExpression, x)
 
    PROTECTED:
-   METHOD InternalTranslate(oExpression)
+   METHOD InternalTranslate(oExpression, x)
 
    PROTECTED:
    METHOD TranslateCondition(oCondition)
@@ -130,13 +130,13 @@ CLASS ExpressionTranslator
    METHOD TranslateValueExpression(oValueExpression)
 
    PROTECTED:
-   METHOD TranslateComposition(oExpression)
+   METHOD TranslateComposition(oSerialComposition)
 
    PROTECTED:
    METHOD TranslateOperand(oOperand, oOperator)
 
    PROTECTED:
-   METHOD new(pWorkarea, pFixVariables)
+   METHOD new(pWorkarea, pFixVariables, pSimplifyCondition, pIndexExpression)
 
    PROTECTED:
    METHOD GetSQLOperator(oOperator)
@@ -183,8 +183,8 @@ CLASS ExpressionTranslator
    PROTECTED:
    METHOD AaddRelations(aRelations) INLINE aAddRangeDistinct(::aRelations, xSelectMany(aRelations, {|y|iif(y:isKindOf("DirectRelation"), {y}, y:aDirectRelations)}), {|x|x:oWorkArea2:cAlias})
 
-   EXPORTED:
-   METHOD new(pWorkarea, pFixVariables, pSimplifyCondition, pIndexExpression)
+   //EXPORTED:
+   //METHOD new(pWorkarea, pFixVariables, pSimplifyCondition, pIndexExpression)
 
 ENDCLASS
 
@@ -260,7 +260,7 @@ METHOD Translate(oExpression, x) CLASS ExpressionTranslator
    LOCAL cFilterCondition
    LOCAL oFilterCondition
    LOCAL oParser
-   LOCAL oErr
+   //LOCAL oErr
    LOCAL aInitRelations
    LOCAL aSortedRelations
    LOCAL addedAliases
@@ -268,7 +268,7 @@ METHOD Translate(oExpression, x) CLASS ExpressionTranslator
    LOCAL resultFooter := ""
    LOCAL aFilters := {}
 
-   BEGIN SEQUENCE WITH __BreakBlock()
+   //BEGIN SEQUENCE WITH __BreakBlock()
       result := iif(pcount() == 2, ::InternalTranslate(oExpression, @x), ::InternalTranslate(oExpression))
 
       IF oExpression:isKindOf("ConditionBase")
@@ -322,13 +322,12 @@ METHOD Translate(oExpression, x) CLASS ExpressionTranslator
             result := resultHeader + " where " + result + resultFooter
          ENDIF
       ENDIF
-   RECOVER USING oErr
+   /*RECOVER USING oErr
       #ifdef DEBUG
          throw(oErr)
       #endif
       result := NIL
-   END SEQUENCE
-
+   END SEQUENCE*/
 RETURN result
 
 METHOD InternalTranslate(oExpression, x) CLASS ExpressionTranslator
@@ -558,7 +557,7 @@ CLASS MSSQLExpressionTranslator FROM ExpressionTranslator
    DATA cFalse INIT "0"
 
    EXPORTED:
-   METHOD new(pWorkarea, pFixVariables)
+   METHOD new(pWorkarea, pFixVariables, pSimplifyCondition, pIndexExpression)
 
    PROTECTED:
    METHOD GetFunctionName(oFunctionExpression)
@@ -587,8 +586,8 @@ CLASS MSSQLExpressionTranslator FROM ExpressionTranslator
    PROTECTED:
    METHOD Deny(cCondition) INLINE "not(" + cCondition + ")"
 
-   EXPORTED:
-   METHOD new(pWorkarea, pFixVariables, pSimplifyCondition, pIndexExpression)
+   //EXPORTED:
+   //METHOD new(pWorkarea, pFixVariables, pSimplifyCondition, pIndexExpression)
 
 ENDCLASS
 
