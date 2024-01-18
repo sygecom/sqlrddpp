@@ -6,7 +6,7 @@
 
 -inc
 
-#-mt
+-mt
 
 -Iinclude
 -Iinclude/firebird
