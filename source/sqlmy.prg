@@ -54,18 +54,10 @@
 #include "mysql.ch"
 #include "sqlrddsetup.ch"
 
-#pragma /w0
-#pragma /es0
-/*
-Coloquei os dois acima por que não consegui resolver os erros abaixo:
-source\sqlmy.prg(275) Warning W0032  Variable 'NVERSIONP' is assigned but not used in function 'SR_MYSQL_CONNECTRAW(248)
-*/
-
-#define SR_CRLF   (chr(13) + chr(10))
-
-#define  DEBUGSESSION                .F.
-#define ARRAY_BLOCK                  500
-#define MINIMAL_MYSQL_SUPPORTED  40105
+#define SR_CRLF                   (chr(13) + chr(10))
+#define DEBUGSESSION              .F.
+#define ARRAY_BLOCK               500
+#define MINIMAL_MYSQL_SUPPORTED   40105
 
 CLASS SR_MYSQL FROM SR_CONNECTION
 
@@ -137,14 +129,15 @@ METHOD FetchRaw(lTranslate, aFields) CLASS SR_MYSQL
 
    ::nRetCode := SQL_ERROR
 
-   DEFAULT aFields    TO ::aFields
+   DEFAULT aFields TO ::aFields
    DEFAULT lTranslate TO .T.
 
    IF ::hStmt != NIL
       ::nRetCode := MYSFetch(::hDbc)
       ::aCurrLine := NIL
    ELSE
-      ::RunTimeErr("", "MySQLFetch - Invalid cursor state" + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+      ::RunTimeErr("", "MySQLFetch - Invalid cursor state" + SR_CRLF + SR_CRLF + ;
+         "Last command sent to database : " + SR_CRLF + ::cLastComm)
    ENDIF
 
 RETURN ::nRetCode
@@ -160,14 +153,21 @@ RETURN NIL
 
 METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName) CLASS SR_MYSQL
 
-   //LOCAL nType := 0
-   //LOCAL nLen := 0
-   //LOCAL nNull := 0
-   LOCAL aFields //:= {}
-   //LOCAL nDec := 0
+   LOCAL nType := 0
+   LOCAL nLen := 0
+   LOCAL nNull := 0
+   LOCAL aFields := {}
+   LOCAL nDec := 0
    LOCAL nRet
-   //LOCAL cVlr := ""
+   LOCAL cVlr := ""
    LOCAL aFld
+
+   HB_SYMBOL_UNUSED(nType)
+   HB_SYMBOL_UNUSED(nLen)
+   HB_SYMBOL_UNUSED(nNull)
+   HB_SYMBOL_UNUSED(aFields)
+   HB_SYMBOL_UNUSED(nDec)
+   HB_SYMBOL_UNUSED(cVlr)
 
    DEFAULT lReSelect    TO .T.
    DEFAULT lLoadCache   TO .F.
@@ -207,9 +207,9 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
       aFld[FIELD_ENUM] := aFld:__enumIndex()
    NEXT
 
-   If lReSelect .AND. !lLoadCache
+   IF lReSelect .AND. !lLoadCache
       ::FreeStatement()
-   EndIf
+   ENDIF
 
 RETURN aFields
 
@@ -223,13 +223,19 @@ RETURN "(" + alltrim(str(::nRetCode)) + ") " + MYSErrMsg(::hDbc)
 
 METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, cConnect, nPrefetch, cTargetDB, nSelMeth, nEmptyMode, nDateMode, lCounter, lAutoCommit, nTimeout) CLASS SR_MYSQL
 
-   //LOCAL hEnv := 0
-   LOCAL hDbc //:= 0
+   LOCAL hEnv := 0
+   LOCAL hDbc := 0
    LOCAL nret
-   //LOCAL cVersion := ""
-   LOCAL cSystemVers //:= ""
-   //LOCAL cBuff := ""
+   LOCAL cVersion := ""
+   LOCAL cSystemVers := ""
+   LOCAL cBuff := ""
    LOCAL nVersionp
+
+   HB_SYMBOL_UNUSED(hEnv)
+   HB_SYMBOL_UNUSED(hDbc)
+   HB_SYMBOL_UNUSED(cVersion)
+   HB_SYMBOL_UNUSED(cSystemVers)
+   HB_SYMBOL_UNUSED(cBuff)
 
    HB_SYMBOL_UNUSED(cDSN)
    HB_SYMBOL_UNUSED(cUser)
@@ -253,6 +259,7 @@ METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace
       ::nSystemID := 0
       SR_MsgLogFile("Connection Error")
       nVersionp := MINIMAL_MYSQL_SUPPORTED - 100
+      HB_SYMBOL_UNUSED(nVersionp)
       RETURN SELF
    ELSE
       ::cConnect  := cConnect

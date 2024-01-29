@@ -77,21 +77,22 @@ CLASS SR_ORACLE2 FROM SR_CONNECTION
    METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, cConnect, nPrefetch, cTargetDB, nSelMeth, nEmptyMode, nDateMode, lCounter, lAutoCommit) CONSTRUCTOR
    METHOD End()
    METHOD LastError()
-   METHOD Commit()
+   METHOD Commit(lNoLog)
    METHOD RollBack()
    METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cDeletedName)
    METHOD ExecuteRaw(cCommand)
    METHOD AllocStatement()
    METHOD FreeStatement()
    METHOD FetchRaw(lTranslate, aFields)
-   METHOD FieldGet(nField, aField, lTranslate)
+   METHOD FieldGet(nField, aFields, lTranslate)
    METHOD MoreResults(aArray, lTranslate)
-   METHOD BINDPARAM(lStart, lIn, cRet, nLen)
+   METHOD BINDPARAM(lStart, lIn, nLen, cRet, nLenRet) //METHOD BINDPARAM(lStart, lIn, cRet, nLen)
    METHOD ConvertParams(c)
    METHOD WriteMemo(cFileName, nRecno, cRecnoName, aColumnsAndData)
    METHOD Getline(aFields, lTranslate, aArray)
    METHOD ExecSPRC(cComm, lMsg, lFetch, aArray, cFile, cAlias, cVar, nMaxRecords, lNoRecno, cRecnoName, cDeletedName, lTranslate, nLogMode)
-   METHOD ExecSP(cComm, aReturn, nParam)
+   METHOD ExecSP(cComm, aReturn, nParam, aType)
+   METHOD GetAffectedRows()
 
 ENDCLASS
 
@@ -154,7 +155,8 @@ METHOD FetchRaw(lTranslate, aFields) CLASS SR_ORACLE2
       ::nRetCode := SQLO2_FETCH(::hDBC)
       ::aCurrLine := NIL
    ELSE
-      ::RunTimeErr("", "SQLO2_FETCH - Invalid cursor state" + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+      ::RunTimeErr("", "SQLO2_FETCH - Invalid cursor state" + SR_CRLF + SR_CRLF + ;
+         "Last command sent to database : " + SR_CRLF + ::cLastComm)
    ENDIF
 
 RETURN ::nRetCode
@@ -165,7 +167,8 @@ METHOD FreeStatement() CLASS SR_ORACLE2
 
    IF ::hDBC != NIL .AND. ::hstmt != NIL
       IF SQLO2_CLOSESTMT(::hDBC) != SQL_SUCCESS
-         ::RunTimeErr("", "SQLO2_CLOSESTMT error" + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+         ::RunTimeErr("", "SQLO2_CLOSESTMT error" + SR_CRLF + SR_CRLF + ;
+            "Last command sent to database : " + SR_CRLF + ::cLastComm)
       ENDIF
       ::hstmt := NIL
    ENDIF
@@ -178,6 +181,8 @@ METHOD AllocStatement() CLASS SR_ORACLE2
 
    LOCAL hStmtLocal := 0
    LOCAL nRet := 0
+   
+   HB_SYMBOL_UNUSED(hStmtLocal)
 
    ::FreeStatement()
 
@@ -209,6 +214,9 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    LOCAL nRet
    LOCAL cVlr := ""
 
+   HB_SYMBOL_UNUSED(aFields)
+   HB_SYMBOL_UNUSED(cVlr)
+
    DEFAULT lReSelect    TO .T.
    DEFAULT lLoadCache   TO .F.
    DEFAULT cWhere       TO ""
@@ -229,7 +237,8 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    ::nFields := SQLO2_NUMCOLS(::hDBC)
 
    IF ::nFields < 0
-      ::RunTimeErr("", "SQLO2_NUMCOLS Error" + SR_CRLF + str(::nFields) + SR_CRLF + "Last command sent to database : " + ::cLastComm)
+      ::RunTimeErr("", "SQLO2_NUMCOLS Error" + SR_CRLF + str(::nFields) + SR_CRLF + ;
+         "Last command sent to database : " + ::cLastComm)
       RETURN NIL
    ENDIF
 
@@ -238,7 +247,8 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    FOR n := 1 TO ::nFields
 
       IF (::nRetCode := SQLO2_DESCRIBECOL(::hDBC, n, @cName, @nType, @nLen, @nDec, @nNull)) != SQL_SUCCESS
-         ::RunTimeErr("", "SQLDescribeCol Error" + SR_CRLF + ::LastError() + SR_CRLF + "Last command sent to database : " + ::cLastComm)
+         ::RunTimeErr("", "SQLDescribeCol Error" + SR_CRLF + ::LastError() + SR_CRLF + ;
+            "Last command sent to database : " + ::cLastComm)
          RETURN NIL
       ELSE
          _nLen := nLen
@@ -273,6 +283,9 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
       ::FreeStatement()
    ENDIF
 
+   HB_SYMBOL_UNUSED(_nLen)
+   HB_SYMBOL_UNUSED(_nDec)
+
 RETURN aFields
 
 /*------------------------------------------------------------------------*/
@@ -298,6 +311,11 @@ METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace
    LOCAL nlen
    LOCAL s_reEnvVar := HB_RegexComp("(\d+\.\d+\.\d+)")
    //LOCAL cString
+   
+   HB_SYMBOL_UNUSED(hEnv)
+   HB_SYMBOL_UNUSED(cVersion)
+   HB_SYMBOL_UNUSED(cSystemVers)
+   HB_SYMBOL_UNUSED(cBuff)
 
    HB_SYMBOL_UNUSED(cDSN)
    HB_SYMBOL_UNUSED(cUser)
@@ -522,6 +540,8 @@ METHOD ExecSP(cComm, aReturn, nParam, aType) CLASS SR_ORACLE2
    LOCAL i
    LOCAL n
    LOCAL nError := 0
+   
+   HB_SYMBOL_UNUSED(nError)
 
    DEFAULT aReturn TO {}
    DEFAULT aType TO {}
@@ -571,7 +591,7 @@ METHOD ExecSPRC(cComm, lMsg, lFetch, aArray, cFile, cAlias, cVar, nMaxRecords, l
    LOCAL nBlocks
    LOCAL nError
    LOCAL aFields
-   LOCAL nCols
+   LOCAL nCols := 0
    LOCAL aDb
    LOCAL nFieldRec
    LOCAL aMemo
@@ -581,6 +601,8 @@ METHOD ExecSPRC(cComm, lMsg, lFetch, aArray, cFile, cAlias, cVar, nMaxRecords, l
    LOCAL nLinesMemo
    LOCAL cCampo
    LOCAL j
+   
+   HB_SYMBOL_UNUSED(nAllocated)
 
    DEFAULT nMaxRecords TO 999999999999 // TODO:
    DEFAULT cVar TO ":c1"
@@ -788,11 +810,14 @@ METHOD ExecSPRC(cComm, lMsg, lFetch, aArray, cFile, cAlias, cVar, nMaxRecords, l
 
    IF nError < 0
       IF lFetch
-         ::RunTimeErr("", "SQLExecDirect Error in close cursor Statement" )
+         ::RunTimeErr("", "SQLExecDirect Error in close cursor Statement")
       ENDIF
    ENDIF
 
-  ::freestatement()
+   ::freestatement()
+
+   HB_SYMBOL_UNUSED(aFields)
+   HB_SYMBOL_UNUSED(nBlocks)
 
 RETURN 0
 
@@ -802,6 +827,8 @@ FUNCTION ExecuteSP2(cComm, aReturn)
    //LOCAL n
    LOCAL nError := 0
    LOCAL oConn := SR_GetConnection()
+   
+   HB_SYMBOL_UNUSED(nError)
 
    DEFAULT aReturn TO {}
 

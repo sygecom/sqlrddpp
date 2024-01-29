@@ -129,7 +129,8 @@ METHOD FetchRaw(lTranslate, aFields) CLASS SR_FIREBIRD5
       ::nRetCode := FBFetch5(::hEnv)
       ::aCurrLine := NIL
    ELSE
-      ::RunTimeErr("", "FBFetch - Invalid cursor state" + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+      ::RunTimeErr("", "FBFetch - Invalid cursor state" + SR_CRLF + SR_CRLF + ;
+         "Last command sent to database : " + SR_CRLF + ::cLastComm)
    ENDIF
 
 RETURN ::nRetCode
@@ -157,16 +158,19 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    LOCAL nLen := 0
    LOCAL nNull := 0
    LOCAL cName
-   //LOCAL _nLen
+   LOCAL _nLen
    LOCAL _nDec
    LOCAL nPos
    LOCAL cType
    LOCAL nLenField
-   LOCAL aFields //:= {}
+   LOCAL aFields := {}
    LOCAL nDec := 0
    LOCAL nRet
-   //LOCAL cVlr := ""
+   LOCAL cVlr := ""
    LOCAL aLocalPrecision := {}
+
+   HB_SYMBOL_UNUSED(aFields)
+   HB_SYMBOL_UNUSED(cVlr)
 
    DEFAULT lReSelect TO .T.
    DEFAULT lLoadCache TO .F.
@@ -188,7 +192,8 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    ENDIF
 
    IF (::nRetCode := FBNumResultCols5(::hEnv, @nFields)) != SQL_SUCCESS
-      ::RunTimeErr("", "FBNumResultCols Error" + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+      ::RunTimeErr("", "FBNumResultCols Error" + SR_CRLF + SR_CRLF + ;
+         "Last command sent to database : " + SR_CRLF + ::cLastComm)
       RETURN NIL
    ENDIF
 
@@ -200,10 +205,11 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
       nDec := 0
 
       IF (::nRetCode := FBDescribeCol5(::hEnv, n, @cName, @nType, @nLen, @nDec, @nNull)) != SQL_SUCCESS
-         ::RunTimeErr("", "FBDescribeCol Error" + SR_CRLF + ::LastError() + SR_CRLF + "Last command sent to database : " + ::cLastComm)
+         ::RunTimeErr("", "FBDescribeCol Error" + SR_CRLF + ::LastError() + SR_CRLF + ;
+            "Last command sent to database : " + ::cLastComm)
          RETURN NIL
       ELSE
-         //_nLen := nLen
+         _nLen := nLen
          _nDec := nDec
 
          cName := upper(alltrim(cName))
@@ -230,6 +236,8 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    IF lReSelect .AND. !lLoadCache
       ::FreeStatement()
    ENDIF
+
+   HB_SYMBOL_UNUSED(_nLen)
 
 RETURN aFields
 
@@ -343,11 +351,11 @@ RETURN nRet
 METHOD MoreResults(aArray, lTranslate) CLASS SR_FIREBIRD5
 
    LOCAL nRet
-   //LOCAL i
+   //LOCAL i (not used)
    LOCAL n
    LOCAL nvalue := -1
 
-   //STATIC aFieldsMore
+   //STATIC aFieldsMore (not used)
 
    DEFAULT lTranslate TO .T.
 

@@ -500,6 +500,8 @@ METHOD Evaluate(lIgnoreRelations) CLASS ClipperExpression
       oErr:description += ";The value unseccessfully evaluated was : " + ::cValue   + ";"
       throw(oErr)
    END SEQUENCE
+   
+   HB_SYMBOL_UNUSED(nseconds)
 
 RETURN result
 

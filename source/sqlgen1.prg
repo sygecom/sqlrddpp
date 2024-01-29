@@ -635,7 +635,7 @@ STATIC FUNCTION SR_SQLCodeGen2(apCode, aParam, nSystemId, lIdent, nIP, nContext,
                      cSql += SR_CRLF
                   ELSEIF outer[1] = cAtual .AND. outer[2] = cAtual2
                      cSql += " AND "
-                  ELSEIF  outer:__enumIndex() > 1
+                  ELSEIF outer:__enumIndex() > 1
                      cSql += SR_CRLF
                   ENDIF
 
@@ -1220,6 +1220,10 @@ STATIC FUNCTION SR_SQLCodeGen2(apCode, aParam, nSystemId, lIdent, nIP, nContext,
       nSpaces -= 2
    ENDIF
 
+   HB_SYMBOL_UNUSED(aLJoins)
+   HB_SYMBOL_UNUSED(uData)
+   HB_SYMBOL_UNUSED(cTrailler)
+
    RETURN cSQL
 
 /*
@@ -1630,6 +1634,8 @@ FUNCTION SR_TableAttr(cTableName, nSystemID)
    LOCAL aRet
    LOCAL cOwner //:= ""
    LOCAL cSlash
+   
+   HB_SYMBOL_UNUSED(cOwner)
 
    IF substr(cTableName, 2, 1) == ":"
       /* Remove drive letter */

@@ -84,6 +84,7 @@ CLASS SR_ODBC FROM SR_CONNECTION
    METHOD WriteMemo(cFileName, nRecno, cRecnoName, aColumnsAndData)
    METHOD DriverCatTables()
    METHOD Getline(aFields, lTranslate, aArray)
+   //METHOD FetchMultiple(lTranslate, aFields, aCache, nCurrentFetch, aInfo, nDirection, nBlockPos, hnRecno, lFetchAll, aFetch, uRecord, nPos)
    METHOD FetchMultiple(lTranslate, aFields, aCache, nCurrentFetch, aInfo, nDirection, hnRecno, lFetchAll, aFetch, uRecord, nPos)
 
 ENDCLASS
@@ -123,7 +124,7 @@ METHOD DriverCatTables() CLASS SR_ODBC
    LOCAL nRet
    LOCAL aArray := Array(ARRAY_BLOCK1)
    LOCAL nAllocated
-   //LOCAL nBlocks
+   LOCAL nBlocks
    LOCAL aFields
    LOCAL n := 0
 
@@ -133,7 +134,7 @@ METHOD DriverCatTables() CLASS SR_ODBC
    IF nRet == SQL_SUCCESS .OR. nRet == SQL_SUCCESS_WITH_INFO
 
       nAllocated := ARRAY_BLOCK1
-      //nBlocks    := 1
+      nBlocks    := 1
       n          := 0
       aFields    := ::IniFields(.F.,,,,,,)
 
@@ -167,6 +168,8 @@ METHOD DriverCatTables() CLASS SR_ODBC
 
    ::FreeStatement()
    aSize(aArray, n)
+
+   HB_SYMBOL_UNUSED(nBlocks)
 
 RETURN aArray
 
@@ -222,7 +225,8 @@ METHOD FetchRaw(lTranslate, aFields) CLASS SR_ODBC
       ::nRetCode := SR_Fetch(::hStmt)
       ::aCurrLine := NIL
    ELSE
-      ::RunTimeErr("", "SQLFetch - Invalid cursor state" + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+      ::RunTimeErr("", "SQLFetch - Invalid cursor state" + SR_CRLF + SR_CRLF + ;
+         "Last command sent to database : " + SR_CRLF + ::cLastComm)
    ENDIF
 
 RETURN ::nRetCode
@@ -231,7 +235,8 @@ METHOD FreeStatement() CLASS SR_ODBC
 
    IF !empty(::hStmt) // != NIL // != 0
       IF SR_FreeStm(::hStmt, SQL_DROP) != SQL_SUCCESS
-         ::RunTimeErr("", "SQLFreeStmt [DROP] error" + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+         ::RunTimeErr("", "SQLFreeStmt [DROP] error" + SR_CRLF + SR_CRLF + ;
+            "Last command sent to database : " + SR_CRLF + ::cLastComm)
       ENDIF
       ::hStmt := NIL
    ENDIF
@@ -241,15 +246,18 @@ RETURN NIL
 METHOD AllocStatement() CLASS SR_ODBC
 
    LOCAL hStmtLocal := NIL
-   LOCAL nRet //:= 0
+   LOCAL nRet := 0
+   
+   HB_SYMBOL_UNUSED(nRet)
 
    ::FreeStatement()
 
    IF (nRet := SR_AllocSt(::hDbc, @hStmtLocal)) == SQL_SUCCESS
-      ::hStmt = hStmtLocal
+      ::hStmt := hStmtLocal
    ELSE
       ::nRetCode := nRet
-      ::RunTimeErr("", "SQLAllocStmt [NEW] Error" + SR_CRLF + SR_CRLF + ::LastError() + SR_CRLF + SR_CRLF + "Last command sent to database : " + SR_CRLF + ::cLastComm)
+      ::RunTimeErr("", "SQLAllocStmt [NEW] Error" + SR_CRLF + SR_CRLF + ::LastError() + SR_CRLF + SR_CRLF + ;
+         "Last command sent to database : " + SR_CRLF + ::cLastComm)
       RETURN NIL
    ENDIF
 
@@ -271,18 +279,21 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
    LOCAL nLen := 0
    LOCAL nNull := 0
    LOCAL cName
-   //LOCAL _nLen
+   LOCAL _nLen
    LOCAL _nDec
    LOCAL cType
    LOCAL nLenField
    LOCAL nNameLen
-   LOCAL aFields //:= {}
+   LOCAL aFields := {}
    LOCAL nDec := 0
    LOCAL nSoma
    LOCAL nRet
-   //LOCAL cVlr := ""
+   LOCAL cVlr := ""
    //LOCAL nBfLn
    //LOCAL nOut
+
+   HB_SYMBOL_UNUSED(aFields)
+   HB_SYMBOL_UNUSED(cVlr)
 
    DEFAULT lReSelect    TO .T.
    DEFAULT lLoadCache   TO .F.
@@ -321,7 +332,7 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
             "Last command sent to database : " + ::cLastComm)
          RETURN NIL
       ELSE
-         //_nLen := nLen
+         _nLen := nLen
          _nDec := nDec
          IF (nType == SQL_DOUBLE .OR. nType == SQL_FLOAT) .AND. nDec == 0
             nDec := 6
@@ -372,6 +383,8 @@ METHOD IniFields(lReSelect, cTable, cCommand, lLoadCache, cWhere, cRecnoName, cD
       ::FreeStatement()
    ENDIF
 
+   HB_SYMBOL_UNUSED(_nLen)
+
 RETURN aFields
 
 METHOD LastError() CLASS SR_ODBC
@@ -390,10 +403,13 @@ METHOD ConnectRaw(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace
    LOCAL hEnv := NIL
    LOCAL hDbc := NIL
    LOCAL nret
-   //LOCAL cVersion := ""
+   LOCAL cVersion := ""
    LOCAL cSystemVers := ""
-   //LOCAL cBuff := ""
+   LOCAL cBuff := ""
    LOCAL aRet := {}
+   
+   HB_SYMBOL_UNUSED(cVersion)
+   HB_SYMBOL_UNUSED(cBuff)
 
    HB_SYMBOL_UNUSED( cDSN)
    HB_SYMBOL_UNUSED(cUser)

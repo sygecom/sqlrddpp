@@ -162,7 +162,10 @@ CLASS SR_CONNECTION
    DATA sslkey
    DATA sslrootcert
    DATA sslcrl
+   // CULIK 21/3/2011 Adicionado para indicar se o indice contem cluster
+   // DATA lClustered AS LOGICAL INIT .F. READONLY (disabled/duplicated)
    //culik 30/12/2011 adicionado para indicar se e  sqlserver versao 2008 ou superior
+   // DATA lSqlServer2008 AS LOGICAL INIT .F. (disabled/duplicated)
    DATA lOracle12      AS LOGICAL INIT .F. // do we have Oracle >= 12.0
 
    DATA lBind INIT .F.
@@ -208,7 +211,7 @@ CLASS SR_CONNECTION
    METHOD ListCatTables(cOwner)
    METHOD DriverCatTables() VIRTUAL
    METHOD FetchMultiple(lTranslate, aFields, aCache, nCurrentFetch, aInfo, nDirection, hnRecno, lFetchAll, aFetch, uRecord, nPos) VIRTUAL
-   METHOD LogQuery(cCommand, cType, nLogMode, nCost)
+   METHOD LogQuery(cCommand, cType, nLogMode, nCost) //METHOD LogQuery(cSql, cType)
 
    METHOD SQLType(nType, cName, nLen)
    METHOD SQLLen(nType, nLen, nDec)
@@ -277,8 +280,10 @@ RETURN NIL
 METHOD ListCatTables(cOwner) CLASS SR_CONNECTION
 
    LOCAL aRet := {}
-   LOCAL aRet2
+   LOCAL aRet2 := {}
    LOCAL i
+
+   HB_SYMBOL_UNUSED(aRet2)
 
    DEFAULT cOwner TO SR_SetGlobalOwner()
 
@@ -382,7 +387,7 @@ RETURN NIL
 
 METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno, cRecnoName, cDeletedName, lTranslate, nLogMode, cType) CLASS SR_CONNECTION
 
-   LOCAL nRet
+   LOCAL nRet := 0
    LOCAL i
    LOCAL j
    LOCAL n
@@ -391,11 +396,15 @@ METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno
    LOCAL aDb
    LOCAL nFieldRec
    LOCAL aFields
-   LOCAL nAllocated
+   LOCAL nBlocks
+   LOCAL nAllocated := 0
    LOCAL nLenMemo
    LOCAL nLinesMemo
    LOCAL aMemo
    LOCAL cFileTemp
+
+   HB_SYMBOL_UNUSED(nRet)
+   HB_SYMBOL_UNUSED(nAllocated)
 
    DEFAULT nLogMode TO ::nLogMode
    DEFAULT cType    TO SQLLOGCHANGES_TYPE_DML
@@ -451,11 +460,12 @@ METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno
          ::cSQLError := ""
          IF lMsg
             IF len(cCommand) > 10000
-               ::RunTimeErr("", "SQLExecDirect Error" + ;
-                        SR_CRLF + ::LastError() + SR_CRLF + "Command sent to database : " + SR_CRLF + SubStr(cCommand, 1, 2000) + " ... (command too long to display here)")
+               ::RunTimeErr("", "SQLExecDirect Error" + SR_CRLF + ::LastError() + SR_CRLF + ;
+                  "Command sent to database : " + SR_CRLF + SubStr(cCommand, 1, 2000) + ;
+                  " ... (command too long to display here)")
             ELSE
-               ::RunTimeErr("", "SQLExecDirect Error" + ;
-                        SR_CRLF + ::LastError() + SR_CRLF + "Command sent to database : " + SR_CRLF + cCommand)
+               ::RunTimeErr("", "SQLExecDirect Error" + SR_CRLF + ::LastError() + SR_CRLF + ;
+                  "Command sent to database : " + SR_CRLF + cCommand)
             ENDIF
          ELSE
             ::cSQLError := ::LastError()
@@ -590,6 +600,7 @@ METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno
                   nAllocated := ARRAY_BLOCK1
                ENDIF
 
+               nBlocks := 1
                n       := 0
                aFields := ::IniFields(.F.,,,,, cRecnoName, cDeletedName)
 
@@ -640,6 +651,8 @@ METHOD Exec(cCommand, lMsg, lFetch, aArray, cFile, cAlias, nMaxRecords, lNoRecno
 
    ENDIF
 
+   HB_SYMBOL_UNUSED(nBlocks)
+
 RETURN nRet
 
 METHOD AllocStatement() CLASS SR_CONNECTION
@@ -647,7 +660,9 @@ RETURN SQL_SUCCESS
 
 METHOD Execute(cCommand, lErrMsg, nLogMode, cType, lNeverLog) CLASS SR_CONNECTION
 
-   LOCAL nRet
+   LOCAL nRet := 0
+   
+   HB_SYMBOL_UNUSED(nRet)
 
    DEFAULT lErrMsg   TO .T.
    DEFAULT lNeverLog TO .F.
@@ -696,11 +711,8 @@ METHOD Execute(cCommand, lErrMsg, nLogMode, cType, lNeverLog) CLASS SR_CONNECTIO
          ENDIF
 
          IF lErrMsg .AND. nRet != SQL_SUCCESS .AND. nRet != SQL_SUCCESS_WITH_INFO .AND. (!(("DELETE FROM " $ upper(cCommand) .OR. "UPDATE " $ upper(left(cCommand, 7))) .AND. nRet == SQL_NO_DATA_FOUND))
-
-            ::RunTimeErr("", "SQLExecDirect Error" + ;
-                     SR_CRLF + ::LastError() + SR_CRLF + ;
-                     "Command : " + cCommand + SR_CRLF + ;
-                     "hStmt   : " + SR_Val2Char(::hStmt))
+            ::RunTimeErr("", "SQLExecDirect Error" + SR_CRLF + ::LastError() + SR_CRLF + ;
+               "Command : " + cCommand + SR_CRLF + "hStmt   : " + SR_Val2Char(::hStmt))
          ENDIF
 
          IF ::nAutoCommit > 0 .AND. Upper(SubStr(ltrim(cCommand), 1, 6)) $ "UPDATE,INSERT,DELETE"
@@ -993,9 +1005,16 @@ METHOD Connect(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, c
 
    LOCAL hEnv := NIL
    LOCAL hDbc := NIL
+   LOCAL cVersion := ""
+   LOCAL cSystemVers := ""
+   LOCAL cBuff := ""
    LOCAL aCon
    LOCAL aItem
    LOCAL aToken
+
+   HB_SYMBOL_UNUSED(cVersion)
+   HB_SYMBOL_UNUSED(cSystemVers)
+   HB_SYMBOL_UNUSED(cBuff)
 
    DEFAULT nVersion    TO 1
    DEFAULT lTrace      TO .F.
@@ -1053,10 +1072,11 @@ METHOD Connect(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, c
          ENDIF
 
          aToken := hb_atokens(aItem, "=")
+         cBuff := alltrim(Upper(aToken[1]))
          IF len(aToken) = 1
             aadd(aToken, "")
          ENDIF
-         SWITCH alltrim(Upper(aToken[1]))
+         SWITCH cBuff
          CASE "UID"
          CASE "UIID"
          CASE "USR"
@@ -1146,6 +1166,8 @@ METHOD Connect(cDSN, cUser, cPassword, nVersion, cOwner, nSizeMaxBuff, lTrace, c
             EXIT
          CASE "COMPRESS"
             ::lCompress := Upper(aToken[2]) $ "Y,S,TRUE"
+//         OtherWise
+//            SR_MsgLogFile("Invalid connection string entry : " + cBuff + " = " + SR_Val2Char(aToken[2]))
          ENDSWITCH
       NEXT
    ENDIF
@@ -1249,6 +1271,10 @@ METHOD SQLType(nType, cName, nLen) CLASS SR_CONNECTION
 RETURN cType
 
 METHOD SQLLen(nType, nLen, nDec) CLASS SR_CONNECTION
+
+   LOCAL cType := "U"
+   
+   HB_SYMBOL_UNUSED(cType)
 
    DEFAULT nDec TO -1
 
